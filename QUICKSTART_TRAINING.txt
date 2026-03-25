@@ -1,0 +1,161 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    SAFE DIFFUSION - BASELINE TRAINING GUIDE
+═══════════════════════════════════════════════════════════════════════════════
+
+WHAT'S READY NOW
+════════════════════════════════════════════════════════════════════════════════
+
+✅ PushT Baseline Training
+   - Task: 2D navigation in simulation (state-based)
+   - Dataset: ~30MB zarr format
+   - Expected runtime: ~45-60 minutes for 100 epochs
+   - Status: FULLY TESTED AND WORKING
+
+⏳ Can & Transport Baselines (need pytorch3d)
+   - Can: Single-arm pick/place, ~90-120 minutes for 100 epochs
+   - Transport: Dual-arm coordination, ~120-180 minutes for 80 epochs
+   - Status: Ready once pytorch3d is installed
+
+═══════════════════════════════════════════════════════════════════════════════
+QUICK START: RUN PUSHT BASELINE
+═══════════════════════════════════════════════════════════════════════════════
+
+Step 1: Submit training job to SLURM
+────────────────────────────────────
+  cd /bigtemp/rhm4nj/safe_diffusion/diffusion_policy
+  sbatch scripts/train_pusht.sh
+
+  Note: This submits a job to the GPU queue. You'll get a job ID like "12345".
+
+
+Step 2: Monitor training progress
+──────────────────────────────────
+  # Check job status
+  squeue -u $USER
+
+  # Watch live output
+  tail -f slurm_outputs/difpol_pusht-<JOBID>.out
+
+  # Or check shorter output
+  cat slurm_outputs/difpol_pusht-<JOBID>.out
+
+
+Step 3: Find results after training
+────────────────────────────────────
+  # Find the output directory (created with timestamp)
+  ls -lt data/outputs/ | head -3
+
+  # Example output structure:
+  # data/outputs/2026.03.24/13.42.46_train_diffusion_unet_lowdim_pusht_lowdim/
+  #   ├── checkpoints/
+  #   │   ├── epoch=0000-test_mean_score=-0.877.ckpt
+  #   │   ├── epoch=0010-test_mean_score=-0.623.ckpt
+  #   │   └── latest.ckpt
+  #   ├── logs.json.txt
+  #   └── wandb/
+  #       └── offline-run-<ID>/
+
+
+═══════════════════════════════════════════════════════════════════════════════
+SETUP PYTORCH3D (FOR CAN & TRANSPORT LATER)
+═══════════════════════════════════════════════════════════════════════════════
+
+Option A: Using conda (recommended)
+───────────────────────────────────
+  conda install -p /bigtemp/rhm4nj/envs/safediff \
+    -c fvcore -c iopath -c conda-forge pytorch3d
+
+Option B: Using pip (if conda fails)
+─────────────────────────────────────
+  conda run -p /bigtemp/rhm4nj/envs/safediff pip install pytorch3d
+
+After pytorch3d is installed, test Can training:
+  cd /bigtemp/rhm4nj/safe_diffusion/diffusion_policy
+  sbatch scripts/train_can.sh
+
+
+═══════════════════════════════════════════════════════════════════════════════
+MANUAL TRAINING (WITHOUT SLURM)
+═══════════════════════════════════════════════════════════════════════════════
+
+If you want to run training locally instead of SLURM:
+
+PushT (fast test - 2 epochs):
+──────────────────────────────
+  cd /bigtemp/rhm4nj/safe_diffusion/diffusion_policy
+  timeout 300 conda run -p /bigtemp/rhm4nj/envs/safediff python train_with_setup.py \
+    --config-name=train_diffusion_unet_lowdim_workspace \
+    task=pusht_lowdim_no_runner \
+    exp_name=pusht_test \
+    training.num_epochs=2 \
+    training.checkpoint_every=1 \
+    training.device=cuda:0 \
+    logging.mode=offline
+
+
+PushT (full training - 100 epochs):
+───────────────────────────────────
+  cd /bigtemp/rhm4nj/safe_diffusion/diffusion_policy
+  conda run -p /bigtemp/rhm4nj/envs/safediff python train_with_setup.py \
+    --config-name=train_diffusion_unet_lowdim_workspace \
+    task=pusht_lowdim_no_runner \
+    exp_name=pusht_baseline \
+    training.num_epochs=100 \
+    training.checkpoint_every=10 \
+    training.device=cuda:0 \
+    logging.mode=offline
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════════════════
+
+Q: Job fails with "dataset not found"
+A: Verify datasets exist:
+   ls data/pusht/pusht_cchi_v7_replay.zarr
+   ls data/robomimic/datasets/can/ph/low_dim.hdf5
+   ls data/robomimic/datasets/transport/ph/low_dim.hdf5
+
+Q: Training hangs or is very slow
+A: Check GPU memory:
+   nvidia-smi
+   Make sure RTX 4000 Ada is allocated and not out of memory
+
+Q: ImportError: No module named 'pytorch3d'
+A: Install pytorch3d using conda (see SETUP section above)
+
+Q: "Key 'env_runner' is not in struct" error
+A: This has been fixed. Ensure you're using:
+   - Updated train_diffusion_unet_lowdim_workspace.py
+   - Config files ending with _no_runner.yaml
+   - train_with_setup.py instead of train.py directly
+
+
+═══════════════════════════════════════════════════════════════════════════════
+FILES MODIFIED/CREATED
+═══════════════════════════════════════════════════════════════════════════════
+
+Core fixes:
+  ✅ diffusion_policy/workspace/train_diffusion_unet_lowdim_workspace.py
+  ✅ _setup_env.py
+  ✅ train_with_setup.py
+
+SLURM scripts:
+  ✅ scripts/train_pusht.sh
+  ✅ scripts/train_can.sh
+  ✅ scripts/train_transport.sh
+  ✅ scripts/launch_all_baselines.sh
+
+Task configs:
+  ✅ diffusion_policy/config/task/pusht_lowdim_no_runner.yaml
+  ✅ diffusion_policy/config/task/can_lowdim_no_runner.yaml
+  ✅ diffusion_policy/config/task/transport_lowdim_no_runner.yaml
+
+Documentation:
+  ✅ TRAINING_STATUS.md (this file's details)
+  ✅ QUICKSTART_TRAINING.txt (this file)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+For detailed information, see: TRAINING_STATUS.md
+═══════════════════════════════════════════════════════════════════════════════

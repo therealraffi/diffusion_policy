@@ -8,6 +8,7 @@ ENV="/bigtemp/rhm4nj/envs/safediff"
 WORKSPACE="/bigtemp/rhm4nj/safe_diffusion/diffusion_policy"
 
 export MUJOCO_GL=egl
+export PYTHONPATH="$WORKSPACE:$PYTHONPATH"
 
 cd "$WORKSPACE"
 
@@ -23,11 +24,12 @@ run_training() {
     local NUM_EPOCHS=$3
     local GPU=$4
 
-    echo "🚀 Starting $TASK training..."
+    echo "   Starting $TASK training..."
     echo "   Epochs: $NUM_EPOCHS"
     echo "   GPU: cuda:$GPU"
     echo ""
 
+    conda run -p "$ENV" python -c "import _setup_env" && \
     conda run -p "$ENV" python _train_wrapper.py \
         --config-name=train_diffusion_unet_lowdim_workspace \
         task="$TASK" \
@@ -60,6 +62,7 @@ run_eval() {
 
     echo "   Using checkpoint: $CKPT"
 
+    conda run -p "$ENV" python -c "import _setup_env" && \
     conda run -p "$ENV" python eval.py \
         --checkpoint "$CKPT" \
         --output_dir "$OUTPUT_DIR" \
@@ -183,6 +186,7 @@ if [ "$SKIP_EVAL" = false ]; then
     echo "╚═════════════════════════════════════════╝"
     echo ""
 
+    conda run -p "$ENV" python -c "import _setup_env" && \
     conda run -p "$ENV" python multirun_metrics.py \
         --result_dir data/ \
         --output_file results_baseline_summary.json

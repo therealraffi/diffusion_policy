@@ -1,0 +1,132 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                    SLURM Baseline Scripts - CHEATSHEET                      ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+📍 LOCATION: /bigtemp/rhm4nj/safe_diffusion/diffusion_policy/scripts/
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 QUICK START
+
+  sbatch scripts/launch_all_baselines.sh              # Sequential (default)
+  sbatch scripts/launch_all_baselines.sh --parallel   # Parallel
+  sbatch scripts/train_and_eval.sh pusht_lowdim 100  # Train + evaluate
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 MONITOR JOBS
+
+  squeue -u $USER                           # Check status
+  squeue -u $USER -S=name | head -10       # Show top 10
+  tail -f slurm_outputs/*.out               # Watch logs
+  scancel <JOB_ID>                          # Cancel job
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📁 FILE REFERENCE
+
+  launch_all_baselines.sh    Master launcher (submit all 3 jobs)
+  train_pusht.sh             PushT task training (~1 hour)
+  train_can.sh               Can task training (~2 hours)
+  train_transport.sh         Transport task training (~2-3 hours)
+  train_and_eval.sh          Train + evaluate any task (~3-4 hours)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📖 DOCUMENTATION
+
+  QUICK_START.md             5-minute overview
+  SLURM_README.md            Complete technical guide
+  IMPLEMENTATION_SUMMARY.md  Design & customization
+  CHEATSHEET.txt            This file
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 COMMON COMMANDS
+
+  Sequential all three:
+    sbatch scripts/launch_all_baselines.sh
+
+  Parallel all three:
+    sbatch scripts/launch_all_baselines.sh --parallel
+
+  Skip some tasks:
+    sbatch scripts/launch_all_baselines.sh --skip-can
+    sbatch scripts/launch_all_baselines.sh --pusht-only
+    sbatch scripts/launch_all_baselines.sh --transport-only
+
+  Individual tasks:
+    sbatch scripts/train_pusht.sh
+    sbatch scripts/train_can.sh
+    sbatch scripts/train_transport.sh
+
+  Train + evaluate immediately:
+    sbatch scripts/train_and_eval.sh pusht_lowdim 100
+    sbatch scripts/train_and_eval.sh can_lowdim 100
+    sbatch scripts/train_and_eval.sh transport_lowdim 80
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏱️ ESTIMATED TIMES
+
+  Sequential:   ~5-6 hours total
+  Parallel:     ~3 hours total (limited by transport: 2.5h)
+  Individual:   PushT 1h | Can 2h | Transport 2.5h
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📂 OUTPUT LOCATIONS
+
+  Training checkpoints:  data/outputs/YYYY.MM.DD/HH.MM.SS_*/
+  Evaluation results:    data/eval_results/eval_<task>_YYYYMMDD_HHMMSS/
+  Job logs:              slurm_outputs/difpol_<task>-<JOB_ID>.{out,err}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💻 RESOURCES PER TASK
+
+  GPU:      1 × RTX 4000 Ada
+  CPUs:     8 cores
+  Memory:   32 GB
+  Partition: gpu
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔧 CUSTOMIZATION
+
+  Edit script header to change:
+    #SBATCH --time=10:00:00      (increase time limit)
+    #SBATCH --mem=64G            (increase memory)
+    #SBATCH --cpus-per-task=16   (increase CPUs)
+    #SBATCH --gpus=a100:1        (use different GPU)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚡ TROUBLESHOOTING
+
+  "Permission denied":
+    chmod +x scripts/*.sh
+
+  "Dataset not found":
+    ls data/pusht/pusht_cchi_v7_replay.zarr/
+    ls data/robomimic/datasets/can/ph/low_dim.hdf5
+    ls data/robomimic/datasets/transport/ph/low_dim.hdf5
+
+  "Module not found":
+    conda run -p /bigtemp/rhm4nj/envs/safediff pip install gym robomimic
+
+  "Job timed out":
+    Increase #SBATCH --time in script header
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎓 NEXT STEPS
+
+  1. Submit:    sbatch scripts/launch_all_baselines.sh --parallel
+  2. Monitor:   squeue -u $USER (or watch squeue -u $USER)
+  3. Results:   ls data/outputs/YYYY.MM.DD/
+  4. Evaluate:  python multirun_metrics.py --result_dir data/
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+For more info: cat SLURM_README.md

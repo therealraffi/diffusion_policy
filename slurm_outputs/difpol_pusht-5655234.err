@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/bigtemp/rhm4nj/safe_diffusion/diffusion_policy/train_with_setup.py", line 12, in <module>
+    from diffusion_policy.workspace.base_workspace import BaseWorkspace
+  File "/bigtemp/rhm4nj/safe_diffusion/diffusion_policy/diffusion_policy/workspace/base_workspace.py", line 4, in <module>
+    import hydra
+ModuleNotFoundError: No module named 'hydra'

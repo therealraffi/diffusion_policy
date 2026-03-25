@@ -1,0 +1,27 @@
+name: transport_lowdim
+
+# Robomimic Transport task config without env_runner
+# Evaluation will be done separately
+
+obs_dim: 59 # 41+(3+4+2)*2
+action_dim: 14 # 7*2
+keypoint_dim: 3
+
+obs_keys: &obs_keys [
+  'object',
+  'robot0_eef_pos', 'robot0_eef_quat', 'robot0_gripper_qpos',
+  'robot1_eef_pos', 'robot1_eef_quat', 'robot1_gripper_qpos'
+]
+abs_action: &abs_action False
+
+dataset:
+  _target_: diffusion_policy.dataset.robomimic_replay_lowdim_dataset.RobomimicReplayLowdimDataset
+  dataset_path: data/robomimic/datasets/transport/ph/low_dim.hdf5
+  horizon: ${horizon}
+  pad_before: ${eval:'${n_obs_steps}-1+${n_latency_steps}'}
+  pad_after: ${eval:'${n_action_steps}-1'}
+  obs_keys: *obs_keys
+  abs_action: *abs_action
+  use_legacy_normalizer: False
+  seed: 42
+  val_ratio: 0.02

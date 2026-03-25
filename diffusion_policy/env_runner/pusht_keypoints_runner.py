@@ -8,8 +8,10 @@ import dill
 import math
 import wandb.sdk.data_types.video as wv
 from diffusion_policy.env.pusht.pusht_keypoints_env import PushTKeypointsEnv
-from diffusion_policy.gym_util.async_vector_env import AsyncVectorEnv
-# from diffusion_policy.gym_util.sync_vector_env import SyncVectorEnv
+from diffusion_policy.gym_util.sync_vector_env import SyncVectorEnv
+# from diffusion_policy.gym_util.async_vector_env import AsyncVectorEnv
+# Note: AsyncVectorEnv uses shared memory which doesn't support custom observation spaces
+# (e.g., SynchronizedArray in PushTKeypointsEnv). SyncVectorEnv is slower but compatible.
 from diffusion_policy.gym_util.multistep_wrapper import MultiStepWrapper
 from diffusion_policy.gym_util.video_recording_wrapper import VideoRecordingWrapper, VideoRecorder
 
@@ -133,7 +135,7 @@ class PushTKeypointsRunner(BaseLowdimRunner):
             env_prefixs.append('test/')
             env_init_fn_dills.append(dill.dumps(init_fn))
 
-        env = AsyncVectorEnv(env_fns)
+        env = SyncVectorEnv(env_fns)
 
         # test env
         # env.reset(seed=env_seeds)

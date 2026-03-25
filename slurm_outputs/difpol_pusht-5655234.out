@@ -1,0 +1,31 @@
+Tue Mar 24 19:52:09 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 570.124.06             Driver Version: 570.124.06     CUDA Version: 12.8     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA RTX A4000               Off |   00000000:3B:00.0 Off |                  Off |
+| 41%   46C    P8             16W /  140W |       1MiB /  16376MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+SLURM Job ID: 5655234
+Task: PushT (2D Navigation, State-based)
+GPU: NVIDIA RTX A4000
+Timestamp: 2026-03-24 19:52:11
+CPUs: 8 | Memory: 32768 MB
+Working dir: /bigtemp/rhm4nj/safe_diffusion/diffusion_policy
+
+using Python:
+/sw/ubuntu2204/ebu082025/software/common/core/miniforge/25.3.1-py3.12/bin/python
+Starting Train...
+❌ Training failed with exit code 1

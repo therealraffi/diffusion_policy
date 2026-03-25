@@ -1,0 +1,27 @@
+# Interactive GPU Node
+salloc -p gpu -c 8 --mem=32G -J gpu_job -t 240 --gres=gpu:1
+srun --pty bash -i -l --
+
+# Verify torch
+conda run -p /bigtemp/rhm4nj/envs/safediff python -c "import torch; print(torch.cuda.is_available())"
+
+# code 
+conda activate /bigtemp/rhm4nj/envs/safediff
+python train_with_setup.py \
+  --config-name=train_diffusion_unet_lowdim_workspace \
+  task=pusht_lowdim_no_runner \
+  exp_name=pusht_baseline \
+  training.num_epochs=100 \
+  training.checkpoint_every=10 \
+  training.device=cuda:0 \
+  logging.mode=offline
+
+# startup
+tmux
+ml cuda gcc miniforge
+conda activate /bigtemp/rhm4nj/envs/safediff
+ml miniforge
+
+# tmux
+tmux
+tmux a -t 0

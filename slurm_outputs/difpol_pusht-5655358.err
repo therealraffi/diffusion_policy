@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/bigtemp/rhm4nj/safe_diffusion/diffusion_policy/train_with_setup.py", line 12, in <module>
+    from diffusion_policy.workspace.base_workspace import BaseWorkspace
+  File "/bigtemp/rhm4nj/safe_diffusion/diffusion_policy/diffusion_policy/workspace/base_workspace.py", line 9, in <module>
+    import torch
+  File "/bigtemp/rhm4nj/envs/safediff/lib/python3.10/site-packages/torch/__init__.py", line 431, in <module>
+    from torch._C import *  # noqa: F403
+ImportError: /bigtemp/rhm4nj/envs/safediff/lib/python3.10/site-packages/torch/../../.././libtorch_cpu.so: undefined symbol: cuptiActivityEnableDriverApi, version libcupti.so.12

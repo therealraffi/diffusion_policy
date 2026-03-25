@@ -1,0 +1,11 @@
+# Override for training without environment rollouts
+# This avoids gymnasium compatibility issues with custom spaces
+# Use with: python train.py --config-name=train_diffusion_unet_lowdim_no_rollout ...
+
+defaults:
+  - train_diffusion_unet_lowdim_workspace
+
+# Disable rollout evaluation during training
+training:
+  no_eval_rollout: true
+  rollout_every: null

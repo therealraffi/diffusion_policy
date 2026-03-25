@@ -106,16 +106,18 @@ class TrainDiffusionUnetLowdimWorkspace(BaseWorkspace):
                 model=self.ema_model)
 
         # configure env runner
-        env_runner: BaseLowdimRunner
-        env_runner = hydra.utils.instantiate(
-            cfg.task.env_runner,
-            output_dir=self.output_dir)
-        assert isinstance(env_runner, BaseLowdimRunner)
+        env_runner: BaseLowdimRunner = None
+        if 'env_runner' in cfg.task and cfg.task.env_runner is not None:
+            env_runner = hydra.utils.instantiate(
+                cfg.task.env_runner,
+                output_dir=self.output_dir)
+            assert isinstance(env_runner, BaseLowdimRunner)
 
         # configure logging
+        # Note: Don't resolve=True to avoid struct mode errors on missing optional keys (e.g., env_runner)
         wandb_run = wandb.init(
             dir=str(self.output_dir),
-            config=OmegaConf.to_container(cfg, resolve=True),
+            config=OmegaConf.to_container(cfg, resolve=False),
             **cfg.logging
         )
         wandb.config.update(
@@ -213,7 +215,7 @@ class TrainDiffusionUnetLowdimWorkspace(BaseWorkspace):
                 policy.eval()
 
                 # run rollout
-                if (self.epoch % cfg.training.rollout_every) == 0:
+                if env_runner is not None and (self.epoch % cfg.training.rollout_every) == 0:
                     runner_log = env_runner.run(policy)
                     # log all
                     step_log.update(runner_log)
@@ -276,14 +278,24 @@ class TrainDiffusionUnetLowdimWorkspace(BaseWorkspace):
                     for key, value in step_log.items():
                         new_key = key.replace('/', '_')
                         metric_dict[new_key] = value
-                    
+
+                    # If env_runner is None and monitored key doesn't exist,
+                    # add a placeholder to avoid KeyError
+                    if env_runner is None and topk_manager.monitor_key not in metric_dict:
+                        # Use negative val_loss as a fallback metric for checkpoint selection
+                        if 'val_loss' in metric_dict:
+                            metric_dict[topk_manager.monitor_key] = -metric_dict['val_loss']
+                        else:
+                            # If no val_loss either, use train_loss as fallback
+                            metric_dict[topk_manager.monitor_key] = -metric_dict.get('train_loss', 0.0)
+
                     # We can't copy the last checkpoint here
                     # since save_checkpoint uses threads.
                     # therefore at this point the file might have been empty!
-                    topk_ckpt_path = topk_manager.get_ckpt_path(metric_dict)
-
-                    if topk_ckpt_path is not None:
-                        self.save_checkpoint(path=topk_ckpt_path)
+                    if topk_manager.monitor_key in metric_dict:
+                        topk_ckpt_path = topk_manager.get_ckpt_path(metric_dict)
+                        if topk_ckpt_path is not None:
+                            self.save_checkpoint(path=topk_ckpt_path)
                 # ========= eval end for this epoch ==========
                 policy.train()
 
